@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthBot - AI Disease Awareness Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chatbot-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .bot-avatar {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 24px;
+        }
+
+        .chat-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .chat-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9ff;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+
+        .message.bot .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .quick-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e8ff;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e8ff;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .message-input:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+            background: #667eea;
+            color: white;
+            border-radius: 18px;
+            border-bottom-left-radius: 6px;
+            max-width: 80px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .health-tip {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            border-left: 4px solid #4facfe;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chat-header">
+            <div class="bot-avatar">🩺</div>
+            <div class="chat-title">HealthBot AI</div>
+            <div class="chat-subtitle">Your Personal Disease Awareness Assistant</div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    Hello! I'm HealthBot, your AI-powered health assistant. I can help you learn about diseases, symptoms, prevention methods, and general health information. How can I assist you today?
+                    <div class="quick-buttons">
+                        <button class="quick-btn" onclick="sendQuickMessage('Common cold symptoms')">Cold Symptoms</button>
+                        <button class="quick-btn" onclick="sendQuickMessage('Diabetes prevention')">Diabetes Info</button>
+                        <button class="quick-btn" onclick="sendQuickMessage('Heart health tips')">Heart Health</button>
+                        <button class="quick-btn" onclick="sendQuickMessage('Mental health')">Mental Health</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <div class="input-group">
+                <input type="text" class="message-input" id="messageInput" placeholder="Ask about symptoms, diseases, or health tips..." maxlength="200">
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // Health database with disease information
+        const healthDatabase = {
+            'covid': {
+                symptoms: ['fever', 'cough', 'shortness of breath', 'fatigue', 'body aches', 'loss of taste or smell'],
+                prevention: ['Get vaccinated', 'Wear masks in crowded places', 'Practice good hand hygiene', 'Maintain social distancing'],
+                treatment: 'Rest, hydration, and seek medical care if symptoms worsen'
+            },
+            'diabetes': {
+                symptoms: ['excessive thirst', 'frequent urination', 'unexplained weight loss', 'fatigue', 'blurred vision'],
+                prevention: ['Maintain healthy weight', 'Regular exercise', 'Balanced diet', 'Limit sugar intake'],
+                treatment: 'Consult healthcare provider for proper medication and lifestyle management'
+            },
+            'hypertension': {
+                symptoms: ['headaches', 'shortness of breath', 'nosebleeds', 'chest pain'],
+                prevention: ['Reduce sodium intake', 'Regular exercise', 'Maintain healthy weight', 'Limit alcohol'],
+                treatment: 'Regular monitoring and medication as prescribed by doctor'
+            },
+            'common cold': {
+                symptoms: ['runny nose', 'sneezing', 'sore throat', 'cough', 'mild fever'],
+                prevention: ['Wash hands frequently', 'Avoid close contact with sick people', 'Don\'t touch face'],
+                treatment: 'Rest, fluids, and over-the-counter medications for symptom relief'
+            },
+            'flu': {
+                symptoms: ['high fever', 'muscle aches', 'fatigue', 'headache', 'dry cough'],
+                prevention: ['Annual flu vaccination', 'Good hygiene practices', 'Avoid crowds during flu season'],
+                treatment: 'Rest, fluids, antiviral medications if prescribed early'
+            }
+        };
+
+        const healthTips = [
+            "💧 Drink at least 8 glasses of water daily for optimal health",
+            "🥗 Include 5 servings of fruits and vegetables in your daily diet",
+            "🚶‍♀️ Aim for at least 30 minutes of physical activity daily",
+            "😴 Get 7-9 hours of quality sleep each night",
+            "🧼 Wash your hands regularly to prevent infections",
+            "🚭 Avoid smoking and limit alcohol consumption",
+            "🧘‍♀️ Practice stress management techniques like meditation"
+        ];
+
+        function addMessage(content, isUser = false, includeHealthTip = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            let messageContent = `<div class="message-content">${content}`;
+            
+            if (includeHealthTip && !isUser) {
+                const randomTip = healthTips[Math.floor(Math.random() * healthTips.length)];
+                messageContent += `<div class="health-tip"><strong>💡 Health Tip:</strong> ${randomTip}</div>`;
+            }
+            
+            messageContent += '</div>';
+            messageDiv.innerHTML = messageContent;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        function processHealthQuery(query) {
+            const lowerQuery = query.toLowerCase();
+            
+            // Check for disease information
+            for (const [disease, info] of Object.entries(healthDatabase)) {
+                if (lowerQuery.includes(disease)) {
+                    if (lowerQuery.includes('symptom')) {
+                        return `<strong>${disease.toUpperCase()} Symptoms:</strong><br>• ${info.symptoms.join('<br>• ')}<br><br>⚠️ <em>Please consult a healthcare professional for proper diagnosis.</em>`;
+                    } else if (lowerQuery.includes('prevent') || lowerQuery.includes('avoid')) {
+                        return `<strong>${disease.toUpperCase()} Prevention:</strong><br>• ${info.prevention.join('<br>• ')}`;
+                    } else if (lowerQuery.includes('treat') || lowerQuery.includes('cure')) {
+                        return `<strong>${disease.toUpperCase()} Treatment:</strong><br>${info.treatment}<br><br>⚠️ <em>Always consult with a healthcare provider for proper treatment.</em>`;
+                    } else {
+                        return `<strong>${disease.toUpperCase()} Information:</strong><br><br><strong>Symptoms:</strong><br>• ${info.symptoms.join('<br>• ')}<br><br><strong>Prevention:</strong><br>• ${info.prevention.join('<br>• ')}<br><br><strong>Treatment:</strong><br>${info.treatment}<br><br>⚠️ <em>This is for informational purposes only. Consult a healthcare professional.</em>`;
+                    }
+                }
+            }
+
+            // General health queries
+            if (lowerQuery.includes('heart health')) {
+                return "❤️ <strong>Heart Health Tips:</strong><br>• Exercise regularly (30 min/day)<br>• Eat heart-healthy foods (fish, nuts, vegetables)<br>• Manage stress levels<br>• Don't smoke<br>• Limit sodium and trans fats<br>• Maintain healthy weight<br>• Get regular check-ups";
+            }
+
+            if (lowerQuery.includes('mental health')) {
+                return "🧠 <strong>Mental Health Awareness:</strong><br>• Practice mindfulness and meditation<br>• Stay connected with friends and family<br>• Get regular exercise<br>• Maintain work-life balance<br>• Seek professional help when needed<br>• Practice gratitude<br>• Limit social media usage<br><br>🆘 If you're in crisis, contact a mental health professional immediately.";
+            }
+
+            if (lowerQuery.includes('immune system')) {
+                return "🛡️ <strong>Boost Your Immune System:</strong><br>• Get adequate sleep (7-9 hours)<br>• Eat vitamin C rich foods<br>• Stay hydrated<br>• Exercise regularly<br>• Manage stress<br>• Wash hands frequently<br>• Consider probiotics<br>• Don't smoke";
+            }
+
+            if (lowerQuery.includes('nutrition') || lowerQuery.includes('diet')) {
+                return "🥗 <strong>Healthy Nutrition Guidelines:</strong><br>• Eat 5-9 servings of fruits and vegetables daily<br>• Choose whole grains over refined<br>• Include lean proteins<br>• Limit processed foods<br>• Stay hydrated with water<br>• Limit sugar and sodium<br>• Practice portion control";
+            }
+
+            // Default response for unrecognized queries
+            return "I can help you with information about various diseases, symptoms, prevention methods, and general health tips. Try asking about:<br><br>• Specific diseases (COVID, diabetes, flu, etc.)<br>• Symptoms you're experiencing<br>• Prevention strategies<br>• General health topics<br><br>What would you like to know more about?";
+        }
+
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, true);
+            messageInput.value = '';
+            sendBtn.disabled = true;
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Simulate AI processing time
+            setTimeout(() => {
+                removeTypingIndicator();
+                const response = processHealthQuery(message);
+                addMessage(response, false, true);
+                sendBtn.disabled = false;
+            }, 1000 + Math.random() * 1000);
+        }
+
+        function sendQuickMessage(message) {
+            messageInput.value = message;
+            sendMessage();
+        }
+
+        // Event listeners
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !sendBtn.disabled) {
+                sendMessage();
+            }
+        });
+
+        messageInput.addEventListener('input', () => {
+            sendBtn.disabled = !messageInput.value.trim();
+        });
+
+        // Initialize
+        sendBtn.disabled = true;
+    </script>
+</body>
+</html>
